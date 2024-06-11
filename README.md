@@ -1,4 +1,4 @@
-# Imagin Data Statistical Analysis Tool
+# smFISH mRNA-organelle Statistical Analysis Tool
 
 The data collected concerns signals given from a specific mRNA molecule and each molecule's relative localization to a studied sub-cellular site (also called organelle). The Data also devides the organelle to two distinct areas. One of which is close to a proximity marker and another that is far away from it. The data represients each cell as a line and contains the amount of mRNA in each designation, the cellular coverage of the organelle in each cross-section imaged (in %) and data for each mRNA signal identifed. mRNA data inclueds the plane number, the intesity and the colocalization status of each mRNA signal. Each csv file contains data for a single sample.
 

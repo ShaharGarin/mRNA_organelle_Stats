@@ -29,4 +29,5 @@ This program will be used to perform filtering and statistical analysis for csv 
 
 ### How-to:
 To run the program you will need a folder containing the files described above. The program can handle any number of files. Each file will represent a single sample from the smFISH experiment.
-Once you run the program ("main file name") you will be prompted to input the folder with the files, through a browse window. After that, you will need to input the number of samples in the experiment (an int) a name for each sample (will appear in the graphs and tables) and a distinct name for the file of each sample (will be used to identify the file in the folder). The file name needs to be a part of the file for that sample and must not be a part of any other file in the folder. It will be case sensitive.
+Once you run the program ("main file name") you will be prompted to input the folder with the files, the number of samples in the experiment (an int), a name for each sample (will appear in the graphs and tables), and a distinct name for the file of each sample (will be used to identify the file in the folder). The file name needs to be a part of the file for that sample and must not be a part of any other file in the folder. It will be case sensitive.
+All inputs will be made in a single GUI window.

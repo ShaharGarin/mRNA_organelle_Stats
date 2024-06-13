@@ -26,6 +26,7 @@ This program will be used to perform filtering and statistical analysis for csv 
 
 ### Dependencies:
 - Will be updated as the program is written.
+- Likely: pandas, sktinker, scipy, os.
 
 ### How-to:
 To run the program you will need a folder containing the files described above. The program can handle any number of files. Each file will represent a single sample from the smFISH experiment.

@@ -12,11 +12,11 @@ This program will be used to perform filtering and statistical analysis for csv 
 - **Total Not Colocolized with Organelle**: The number of mRNAs designated as not colocolized with the organelle.
 - **Organelle Signal Coveraege of Cell List**: A list with the cellular coverage (in %) of the organelle in each cross-section imaged.
 - **mRNAs z coords**: The z-plane location of each mRNA signal in the cell.
-- **mRNAs intesities**: The intesitie value for each mRNA signal in the cell.
+- **mRNAs intesities**: The intesity value for each mRNA signal in the cell.
 - **mRANAs statis**: The colocalization designation for each mRNA signal in the cell.
 
 ### The goal of the tool is as follows:
-- The tool will be given a folder and will work sequntially on all files in the folder.
+- The tool will be given a folder and will work sequentially on all files in the folder.
 - Filter out cells containing 0 mRNA signals.
 - Filter out specific mRNA signals using user inputed values of organelle signal coverage and mRNA intesities.
 - Create a new, filtered table, withouth the signals and cells that were removed.

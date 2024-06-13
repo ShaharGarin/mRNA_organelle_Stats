@@ -15,6 +15,13 @@ This program will be used to perform filtering and statistical analysis for csv 
 - **mRNAs intesities**: The intesity value for each mRNA signal in the cell.
 - **mRANAs statis**: The colocalization designation for each mRNA signal in the cell.
 
+
+In each image, cells are analyzed and their data is collected.
+
+![A Cell](img/cell.png)
+
+In a cell (as seen above) several types of signals can be found. They include the red spots, which are the locations of mRNA molecules, the green and magenta area, which mark a specific site whithin the cell called ER and the blue signal, which is another cellular site called the nucleus. For my research, the ratio of mRNA signals :red_circle: that are on the same location as the ER signal :four_leaf_clover: :cherry_blossom: is important. The changes in this data point between different strains are also important.
+
 ### The goal of the tool is as follows:
 - The tool will be given a folder and will work sequentially on all files in the folder.
 - Filter out cells containing 0 mRNA signals.

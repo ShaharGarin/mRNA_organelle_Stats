@@ -32,7 +32,7 @@ sam_num = tk.IntVar()
 error_lbl = ttk.Label(gui, text = "")
 error_lbl.grid(row = 20, column = 0)
 
-#Browse folder command funciton
+#Browse folder command function. Also checks folder and number of csv files in it.
 def get_dir():
     sel_dir = filedialog.askdirectory(initialdir = '', title = "Where are your files?", mustexist = True)
     tables_folder_path.set(sel_dir)
@@ -43,42 +43,82 @@ def get_dir():
     else:
         error_lbl.config(text = '')
         sam_num.set(os.listdir(tables_folder_path.get()))
-    
 
+def check_ids():
+    ident_list = list(file_names.get().split(' '))
+    if ident_list == ['']:
+        error_lbl.config(text = "No idnetifiers entered", foreground = 'darkred')
+    #add check for names in the files in the folder
+    else:
+        error_lbl.config(text = '')
+        file_ids.config(text = f"You have {len(ident_list)} sample(s): \n {ident_list}", justify = 'center')
+
+def check_names():
+    name_list = list(sample_names.get().split(' '))
+    if name_list == ['']:
+        error_lbl.config(text = "No names entered", foreground = 'darkred')
+    elif len(name_list) != len(list(file_names.get().split(' '))):
+        error_lbl.config(text = "Number of ids and names don't match", foreground = 'darkred')
+    else:
+        error_lbl.config(text = '')
+        sample_names_lbl.config(text = f"Your sample(s): {name_list} \nMake sure the order is right.", justify = 'center')
 
 #Design gui window
 gui.title("mRNA-Organelle Colocalization Tool")
 gui.geometry('')
 title_lbl = ttk.Label(gui, text = "mRNA-Organelle Colocalization Tool", font = 32, justify = 'center')
 title_lbl.grid(row = 0, column = 0)
+
 #get folder
-folder_lbl = ttk.Button(gui, text = "Browse Folder", command = get_dir)
-folder_lbl.grid(row = 1, column = 0)
 folder_entry = ttk.Entry(gui, textvariable = tables_folder_path, width = 100, justify = 'center')
-folder_entry.grid(row = 2, column = 0)
+folder_entry.grid(row = 1, column = 0)
+folder_lbl = ttk.Button(gui, text = "Enter Folder", command = get_dir)
+folder_lbl.grid(row = 2, column = 0)
+
+#get file/sample ids
+file_names_lbl = ttk.Label(gui, text = 'Enter file indentifiers (case sensetive with spaces seperating each):')
+file_names_lbl.grid(row = 3, column = 0)
+file_names = ttk.Entry(gui, width = 50, justify = 'center')
+file_names.grid(row  = 4, column = 0)
+file_names_but = ttk.Button(gui, text = 'Enter', command = check_ids)
+file_names_but.grid(row = 5, column = 0)
+file_ids = ttk.Label(gui, text = '')
+file_ids.grid(row = 6, column = 0)
+
+#get sample names
+sample_name_lbl = ttk.Label(gui, text = 'Enter sample names (will appear in tables and plots. Same order as ids):')
+sample_name_lbl.grid(row = 7, column = 0)
+sample_names = ttk.Entry(gui, width = 50, justify = 'center')
+sample_names.grid(row = 8, column = 0)
+sample_names_but = ttk.Button(gui, text = 'Enter', command = check_names)
+sample_names_but.grid(row = 9, column = 0)
+sample_names_lbl = ttk.Label(gui, text = '')
+sample_names_lbl.grid(row = 10, column = 0)
 
 #get mRNA intesities min/max
-mrna_int = ttk.Label(gui, text = 'Enter mRNA Intesity values:')
-mrna_int.grid(row = 3, column = 0)
+mrna_int_lbl = ttk.Label(gui, text = 'Enter mRNA Intesity values:')
+mrna_int_lbl.grid(row = 3, column = 1)
 mrna_min_lbl = ttk.Label(gui, text = "min:")
-mrna_min_lbl.grid(row = 4, column = 0)
+mrna_min_lbl.grid(row = 4, column = 1)
 mrna_min = ttk.Entry(gui, width = 10, justify = 'center')
-mrna_min.grid(row = 5, column = 0)
+mrna_min.grid(row = 5, column = 1)
 mrna_max_lbl = ttk.Label(gui, text = "max:")
-mrna_max_lbl.grid(row = 6, column = 0)
+mrna_max_lbl.grid(row = 6, column = 1)
 mrna_max = ttk.Entry(gui, width = 10, justify = 'center')
-mrna_max.grid(row = 7, column = 0)
+mrna_max.grid(row = 7, column = 1)
+
 #get organelle coverages min/max
 org_int = ttk.Label(gui, text = 'Enter Organelle Coverage values:')
-org_int.grid(row = 8, column = 0)
+org_int.grid(row = 8, column = 1)
 org_min_lbl = ttk.Label(gui, text = "min:")
-org_min_lbl.grid(row = 9, column = 0)
+org_min_lbl.grid(row = 9, column = 1)
 org_min = ttk.Entry(gui, width = 10, justify = 'center')
-org_min.grid(row = 10, column = 0)
+org_min.grid(row = 10, column = 1)
 org_max_lbl = ttk.Label(gui, text = "max:")
-org_max_lbl.grid(row = 11, column = 0)
+org_max_lbl.grid(row = 11, column = 1)
 org_max = ttk.Entry(gui, width = 10, justify = 'center')
-org_max.grid(row = 12, column = 0)
+org_max.grid(row = 12, column = 1)
+
 #Run filtering and analysis
 
 #Plot filtered data

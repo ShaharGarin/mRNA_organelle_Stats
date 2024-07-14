@@ -1,13 +1,11 @@
 #Calc % for localizations: NC, ER total and nER cER
 #Calc avarage ER coverage
 
-import xl_calcs_fun as xf
+import mRNA_organelle_colo_fun as xf
 from tkinter import filedialog
 import os
 import pandas as pd
-# import ast
-# import numpy as np
-from scipy import stats
+import tkinter as tk
 
 total_mrna = "Total mRNA per Cell"
 col_ner_title = "Total Colocolized With Organelle Near"
@@ -21,11 +19,50 @@ cer_col_rat = "cER Colocalization Ration"
 not_col_rat = "Not Colocalized Ratio"
 ava_org_cov = "Average Organelle Coverage"
 title_order = [total_mrna, tot_col_rat, not_col_rat, ner_col_rat, cer_col_rat]
+tables_folder_path = tk.StringVar()
+
+#Browse folder command funciton
+def get_dir():
+    sel_dir = filedialog.askdirectory(initialdir = '', title = "Where are your files?", mustexist = True)
+    tables_folder_path.set(sel_dir)
+
+#create gui window
+gui = tk.Tk()
+gui.title("mRNA-Organelle Colocalization Tool")
+gui.geometry('1280x720')
+folder_lbl = tk.Button(gui, text = "Browse Folder", command = get_dir)
+folder_lbl.grid(row = 1, column = 0)
+folder_entry = tk.Entry(gui, textvariable = tables_folder_path)
+folder_entry.grid(row = 2, column = 0)
+#get mRNA intesities min/max
+mrna_int = tk.Label(gui, text = 'Enter mRNA Intesities values:')
+mrna_int.grid(row = 3, column = 0)
+mrna_min_lbl = tk.Label(gui, text = "min:")
+mrna_min_lbl.grid(row = 4, column = 0)
+mrna_min = tk.Entry(gui)
+mrna_min.grid(row = 4, column = 1)
+mrna_max_lbl = tk.Label(gui, text = "max:")
+mrna_max_lbl.grid(row = 5, column = 0)
+mrna_max = tk.Entry(gui)
+mrna_max.grid(row = 5, column = 1)
+#get organelle coverages min/max
+org_int = tk.Label(gui, text = 'Enter Organelle Coverage values:')
+org_int.grid(row = 6, column = 0)
+org_min_lbl = tk.Label(gui, text = "min:")
+org_min_lbl.grid(row = 7, column = 0)
+org_min = tk.Entry(gui)
+org_min.grid(row = 7, column = 1)
+org_max_lbl = tk.Label(gui, text = "max:")
+org_max_lbl.grid(row = 8, column = 0)
+org_max = tk.Entry(gui)
+org_max.grid(row = 8, column = 1)
+#Run filtering and analysis
+
+#Plot filtered data
 
 
 def main():
-    tables_folder_path = filedialog.askdirectory(initialdir = '', title = "Where are your files?", mustexist = True)
-    my_strain_dic = calc_tables(tables_folder_path)
+    my_strain_dic = calc_tables(folder_lbl.)
     #statistics_table(tables_folder_path)
     statistics_table(tables_folder_path + new_folder_string, my_strain_dic)
     

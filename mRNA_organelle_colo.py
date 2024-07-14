@@ -24,29 +24,32 @@ ava_org_cov = "Average Organelle Coverage"
 title_order = [total_mrna, tot_col_rat, not_col_rat, ner_col_rat, cer_col_rat]
 
 
-#Browse folder command funciton
-def get_dir():
-    sel_dir = filedialog.askdirectory(initialdir = '', title = "Where are your files?", mustexist = True)
-    tables_folder_path.set(sel_dir)
 
 #Create gui window
 gui = ThemedTk(theme = 'yaru')
 tables_folder_path = tk.StringVar()
+sam_num = tk.IntVar()
+no_files = ttk.Label(gui, text = "The folder is empty", foreground = 'whitesmoke')
+no_files.grid(row = 20, column = 0)
 
 #Browse folder command funciton
 def get_dir():
     sel_dir = filedialog.askdirectory(initialdir = '', title = "Where are your files?", mustexist = True)
     tables_folder_path.set(sel_dir)
+    sam_num.set(os.listdir(tables_folder_path))
+
 
 #Design gui window
 gui.title("mRNA-Organelle Colocalization Tool")
 gui.geometry('')
 title_lbl = ttk.Label(gui, text = "mRNA-Organelle Colocalization Tool", font = 32, justify = 'center')
 title_lbl.grid(row = 0, column = 0)
+#get folder
 folder_lbl = ttk.Button(gui, text = "Browse Folder", command = get_dir)
 folder_lbl.grid(row = 1, column = 0)
 folder_entry = ttk.Entry(gui, textvariable = tables_folder_path, width = 100, justify = 'center')
 folder_entry.grid(row = 2, column = 0)
+
 #get mRNA intesities min/max
 mrna_int = ttk.Label(gui, text = 'Enter mRNA Intesity values:')
 mrna_int.grid(row = 3, column = 0)
@@ -72,10 +75,6 @@ org_max.grid(row = 12, column = 0)
 #Run filtering and analysis
 
 #Plot filtered data
-
-
-
-
 
 
 def main():

@@ -29,14 +29,18 @@ title_order = [total_mrna, tot_col_rat, not_col_rat, ner_col_rat, cer_col_rat]
 gui = ThemedTk(theme = 'yaru')
 tables_folder_path = tk.StringVar()
 sam_num = tk.IntVar()
-no_files = ttk.Label(gui, text = "The folder is empty", foreground = 'whitesmoke')
+no_files = ttk.Label(gui, text = "")
 no_files.grid(row = 20, column = 0)
 
 #Browse folder command funciton
 def get_dir():
     sel_dir = filedialog.askdirectory(initialdir = '', title = "Where are your files?", mustexist = True)
     tables_folder_path.set(sel_dir)
-    sam_num.set(os.listdir(tables_folder_path))
+    if len(csv_files_list(tables_folder_path.get())) == 0:
+        no_files.config(text = "The folder has no csv files", foreground = 'darkred')
+    else:
+        no_files.config(text = "")
+    sam_num.set(os.listdir(tables_folder_path.get()))
 
 
 #Design gui window

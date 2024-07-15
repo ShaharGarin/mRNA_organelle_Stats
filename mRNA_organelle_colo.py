@@ -22,6 +22,7 @@ cer_col_rat = "cER Colocalization Ration"
 not_col_rat = "Not Colocalized Ratio"
 ava_org_cov = "Average Organelle Coverage"
 title_order = [total_mrna, tot_col_rat, not_col_rat, ner_col_rat, cer_col_rat]
+sample_dict = {}
 
 
 
@@ -30,16 +31,16 @@ gui = ThemedTk(theme = 'yaru')
 tables_folder_path = tk.StringVar()
 sam_num = tk.IntVar()
 error_lbl = ttk.Label(gui, text = "")
-error_lbl.grid(row = 20, column = 0)
+error_lbl.grid(row = 11, column = 0)
 
 #Browse folder command function. Also checks folder and number of csv files in it.
 def get_dir():
     sel_dir = filedialog.askdirectory(initialdir = '', title = "Where are your files?", mustexist = True)
     tables_folder_path.set(sel_dir)
     if tables_folder_path.get() == '':
-        error_lbl.config(text = "No folder selected", foreground = 'darkred')
+        error_lbl.config(text = "No folder selected", foreground = 'indigo')
     elif len(csv_files_list(tables_folder_path.get())) == 0:
-        error_lbl.config(text = "The folder has no csv files", foreground = 'darkred') 
+        error_lbl.config(text = "The folder has no csv files", foreground = 'indigo') 
     else:
         error_lbl.config(text = '')
         sam_num.set(os.listdir(tables_folder_path.get()))
@@ -47,27 +48,72 @@ def get_dir():
 def check_ids():
     ident_list = list(file_names.get().split(' '))
     if ident_list == ['']:
-        error_lbl.config(text = "No idnetifiers entered", foreground = 'darkred')
-    #add check for names in the files in the folder
+        error_lbl.config(text = "No identifiers entered", foreground = 'indigo')
     else:
         error_lbl.config(text = '')
         file_ids.config(text = f"You have {len(ident_list)} sample(s): \n {ident_list}", justify = 'center')
+        #Check each id given has an associated file
+        check_ids_exist(ident_list)
+
+def check_ids_exist(id_list):
+    folder_files = csv_files_list(folder_entry.get())
+    missing_id = []
+    mult_files = []
+    #check if all ids are found in folder
+    for id in id_list:
+        appear = 0
+        appear = sum(1 for x in folder_files if id in x)
+        if appear == 0:
+            missing_id.append(id)
+        #check if all id appear only once
+        if appear > 1:
+            mult_files.append(id)
+    if missing_id != []:
+         error_lbl.config(text = f"The following ids given don't match any file: {missing_id}.\nCan't continue.", foreground = 'indigo', justify = 'center')
+    if mult_files != []:
+        error_lbl.config(text = f"The following ids given appear more than once: {mult_files}.\nCan't continue.", foreground = 'indigo', justify = 'center')
+    
 
 def check_names():
     name_list = list(sample_names.get().split(' '))
-    if name_list == ['']:
-        error_lbl.config(text = "No names entered", foreground = 'darkred')
-    elif len(name_list) != len(list(file_names.get().split(' '))):
-        error_lbl.config(text = "Number of ids and names don't match", foreground = 'darkred')
+    ident_list = list(file_names.get().split(' '))
+    if ident_list == ['']:
+        error_lbl.config(text = "No identifiers entered", foreground = 'indigo')
+    elif name_list == ['']:
+        error_lbl.config(text = "No names entered", foreground = 'indigo')
+    elif len(name_list) != len(ident_list):
+        error_lbl.config(text = "Number of ids and names don't match.\nCan't Continue", foreground = 'indigo', justify = 'center')
     else:
+        for sample in range(len(name_list)):
+            strain_name = name_list[sample]
+            strain_ident = ident_list[sample]
+            sample_dict[strain_name] = strain_ident
         error_lbl.config(text = '')
-        sample_names_lbl.config(text = f"Your sample(s): {name_list} \nMake sure the order is right.", justify = 'center')
+        sample_names_lbl.config(text = f"Your sample(s): {sample_dict} \nMake sure the order is right.", justify = 'center')
+
+def filter_main():
+    if len(folder_entry.get()) == 0 or len(file_names.get()) == 0 or len(sample_names.get()) == 0 or error_lbl.cget('text') != '' or filter_lbl.cget('text') != '':
+        filter_lbl.config(text = "One or more of the needed inputs is missing or wrong.", foreground = 'indigo')
+    filter_vals_list = [mrna_max.get(), mrna_min.get(), org_max.get(), org_min.get()]
+    for val in filter_vals_list:
+        try: val = float(val) 
+        except: ValueError
+        if type(val) != float:
+            filter_lbl.config(text = "Filter value not a number.", foreground = 'indigo')
+        else:
+            zero_filter(folder_entry.get())
+    
+    filter_done_lbl.config(text = f'Filtered and unfiltered tables saved in {folder_entry.get()}{new_folder_string}')
+
+
+def plot_data():
+    return
 
 #Design gui window
 gui.title("mRNA-Organelle Colocalization Tool")
 gui.geometry('')
-title_lbl = ttk.Label(gui, text = "mRNA-Organelle Colocalization Tool", font = 32, justify = 'center')
-title_lbl.grid(row = 0, column = 0)
+title_lbl = ttk.Label(gui, text = "mRNA-Organelle Colocalization Tool", font = ('Calibri', 32, 'bold underline'), justify = 'center')
+title_lbl.grid(row = 0, column = 0, columnspan = 4, pady = 10)
 
 #get folder
 folder_entry = ttk.Entry(gui, textvariable = tables_folder_path, width = 100, justify = 'center')
@@ -95,42 +141,74 @@ sample_names_but.grid(row = 9, column = 0)
 sample_names_lbl = ttk.Label(gui, text = '')
 sample_names_lbl.grid(row = 10, column = 0)
 
+#Filter values seperator
+sep1 = ttk.Separator(gui, orient = 'vertical')
+sep1.grid(row = 1, column = 1, rowspan = 11, columnspan = 1, sticky = 'ns', padx = 2, pady = 2)
+
 #get mRNA intesities min/max
-mrna_int_lbl = ttk.Label(gui, text = 'Enter mRNA Intesity values:')
-mrna_int_lbl.grid(row = 3, column = 1)
+mrna_int_lbl = ttk.Label(gui, text = 'Enter mRNA Intensity values:', justify = 'center')
+mrna_int_lbl.grid(row = 1, column = 2, columnspan = 2)
 mrna_min_lbl = ttk.Label(gui, text = "min:")
-mrna_min_lbl.grid(row = 4, column = 1)
+mrna_min_lbl.grid(row = 2, column = 2)
 mrna_min = ttk.Entry(gui, width = 10, justify = 'center')
-mrna_min.grid(row = 5, column = 1)
+mrna_min.insert(0, '0.1')
+mrna_min.grid(row = 3, column = 2)
 mrna_max_lbl = ttk.Label(gui, text = "max:")
-mrna_max_lbl.grid(row = 6, column = 1)
+mrna_max_lbl.grid(row = 2, column = 3)
 mrna_max = ttk.Entry(gui, width = 10, justify = 'center')
-mrna_max.grid(row = 7, column = 1)
+mrna_max.insert(0, '65535')
+mrna_max.grid(row = 3, column = 3)
 
 #get organelle coverages min/max
-org_int = ttk.Label(gui, text = 'Enter Organelle Coverage values:')
-org_int.grid(row = 8, column = 1)
+org_int = ttk.Label(gui, text = 'Enter Organelle Coverage values:', justify = 'center')
+org_int.grid(row = 4, column = 2, columnspan = 2)
 org_min_lbl = ttk.Label(gui, text = "min:")
-org_min_lbl.grid(row = 9, column = 1)
+org_min_lbl.grid(row = 5, column = 2)
 org_min = ttk.Entry(gui, width = 10, justify = 'center')
-org_min.grid(row = 10, column = 1)
+org_min.insert(0, '0.01')
+org_min.grid(row = 6, column = 2)
 org_max_lbl = ttk.Label(gui, text = "max:")
-org_max_lbl.grid(row = 11, column = 1)
+org_max_lbl.grid(row = 5, column = 3)
 org_max = ttk.Entry(gui, width = 10, justify = 'center')
-org_max.grid(row = 12, column = 1)
+org_max.insert(0, '100')
+org_max.grid(row = 6, column = 3)
 
 #Run filtering and analysis
+filter_but = ttk.Button(gui, text = 'Filter', command = filter_main)
+filter_but.grid(row = 8, column = 2, columnspan = 2)
+filter_lbl = ttk.Label(gui, text = '', justify = 'center', foreground = 'indigo')
+filter_lbl.grid(row = 9, column = 2, columnspan = 2)
+filter_done_lbl = ttk.Label(gui, text = '', justify = 'center', foreground = 'darkgreen')
+filter_done_lbl.grid(row = 10, column = 2, columnspan = 2)
+
+#Plots seperator
+sep2 = ttk.Separator(gui, orient = 'horizontal')
+sep2.grid(row = 12, column = 0, rowspan = 1, columnspan = 100, sticky = 'ew', padx = 2, pady = 2)
 
 #Plot filtered data
+plot_but = ttk.Button(gui, text = 'Plot', command = plot_data)
+plot_but.grid(row = 13, column = 0, columnspan = 4)
 
 
-def main():
+# def main():
  
-    my_strain_dic = calc_tables(tables_folder_path)
-    #statistics_table(tables_folder_path)
-    statistics_table(tables_folder_path + new_folder_string, my_strain_dic)
+#     my_strain_dic = calc_tables(tables_folder_path)
+#     #statistics_table(tables_folder_path)
+#     statistics_table(tables_folder_path + new_folder_string, my_strain_dic)
     
-    return f"Tables saved in {tables_folder_path + new_folder_string}"
+#     return f"Tables saved in {tables_folder_path + new_folder_string}"
+
+def zero_filter(folder_path):
+    csv_files = csv_files_list(folder_path)
+    my_strains = sample_dict
+    try: os.makedirs(folder_path + new_folder_string)
+    except: FileExistsError
+    for key in my_strains:
+            for file in csv_files:
+                if my_strains[key] in file:
+                    file_df = pd.read_csv(file)
+                    file_df = file_df.loc[file_df[total_mrna] != 0]
+                    file_df.to_csv(f"{folder_path}{new_folder_string}{key} no zero.csv")
     
 
 #Calc ratios and averages and add to csv
@@ -155,6 +233,7 @@ def calc_tables(folder_path):
                     file_df.to_csv(f"{folder_path}{new_folder_string}{key} Calculation Table.csv")
                     print(f"file for {key} done")
     return my_strains
+
 #Calc ttests between all files and avarages of each column and create statistics table in csv file
 def statistics_table(folder_path, strain_dic):
     file_list = csv_files_list(folder_path)
@@ -165,7 +244,6 @@ def statistics_table(folder_path, strain_dic):
     not_col_ave = ["Total cER Average", "Total Not Colocolized SEM"]
     col_list = [tot_mrna_ave[0], tot_mrna_ave[1], tot_col_ave[0], tot_col_ave[1], not_col_ave[0], not_col_ave[1], ner_col_ave[0], ner_col_ave[1], cer_col_ave[0], cer_col_ave[1]]
     stat_df = pd.DataFrame(index = col_list, columns = list(strain_dic.keys()))
-    print(strain_dic.keys()) 
     for key in strain_dic:
         for file in file_list:
             if key in file:

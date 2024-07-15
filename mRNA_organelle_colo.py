@@ -102,9 +102,16 @@ def filter_main():
             filter_lbl.config(text = "Filter value not a number.", foreground = 'indigo')
         else:
             zero_filter(folder_entry.get())
-    
+    #filter by mRNA intensity
+
+    #filter by organelle coverage
     filter_done_lbl.config(text = f'Filtered and unfiltered tables saved in {folder_entry.get()}{new_folder_string}')
 
+def mrna_filter():
+    return
+
+def org_filter():
+    return
 
 def plot_data():
     return

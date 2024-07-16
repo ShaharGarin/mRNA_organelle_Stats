@@ -8,6 +8,7 @@ import pandas as pd
 import tkinter as tk
 from tkinter import ttk
 from ttkthemes import ThemedTk
+import ast
 
 
 total_mrna = "Total mRNA per Cell"
@@ -15,6 +16,10 @@ col_ner_title = "Total Colocolized With Organelle Near"
 col_cer_title = "Total Colocolized With Organelle Far"
 not_col_title = "Total Not Colocolized with Organelle"
 org_cov_title = "Organelle Signal Coverage Of Cell List"
+colo_dict = {'nc':not_col_title, 'organelle_far':col_cer_title, 'organelle_near':col_ner_title}
+mrna_z_title = "mRNAs z coords"
+mrna_int_title = "mRNAs intensities"
+mrna_colo_title = "mRNAs status"
 new_folder_string = "/Calc Tables/"
 tot_col_rat = "Total Colocolized Ratio"
 ner_col_rat = "nER Colocalization Ratio"
@@ -92,20 +97,46 @@ def check_names():
         sample_names_lbl.config(text = f"Your sample(s): {sample_dict} \nMake sure the order is right.", justify = 'center')
 
 def filter_main():
-    if len(folder_entry.get()) == 0 or len(file_names.get()) == 0 or len(sample_names.get()) == 0 or error_lbl.cget('text') != '' or filter_lbl.cget('text') != '':
+    if len(folder_entry.get()) == 0 or len(file_names.get()) == 0 or len(sample_names.get()) == 0 or error_lbl.cget('text') != '':
         filter_lbl.config(text = "One or more of the needed inputs is missing or wrong.", foreground = 'indigo')
-    filter_vals_list = [mrna_max.get(), mrna_min.get(), org_max.get(), org_min.get()]
-    for val in filter_vals_list:
-        try: val = float(val) 
-        except: ValueError
+    else:
+        filter_vals_list = [mrna_max.get(), mrna_min.get(), org_max.get(), org_min.get()]
+        for val in filter_vals_list:
+            try: val = float(val) 
+            except: ValueError
         if type(val) != float:
             filter_lbl.config(text = "Filter value not a number.", foreground = 'indigo')
         else:
+            filter_lbl.config(text = '')
             zero_filter(folder_entry.get())
-    #filter by mRNA intensity
-
-    #filter by organelle coverage
-    filter_done_lbl.config(text = f'Filtered and unfiltered tables saved in {folder_entry.get()}{new_folder_string}')
+            file_list = csv_files_list(f"{folder_entry.get()}{new_folder_string}")
+            for file in file_list:
+                for id in list(file_names.get().split(' ')):
+                    if id not in file:
+                        print(1)
+                        continue
+                    else:
+                        file_df = pd.read_csv(file)
+                        for i, row in file_df.iterrows():
+                            int_list = ast.literal_eval(row[mrna_int_title])
+                            colo_list = ast.literal_eval(row[mrna_colo_title])
+                            #filter by mRNA intensity
+                            filter_list = []
+                            for i in range(len(int_list)):
+                                if float(int_list[i]) > float(mrna_max.get()) or float(int_list[i]) < float(mrna_min.get()):
+                                    print(1)
+                                    row[total_mrna] = int(row[total_mrna]) - 1
+                                    row[colo_dict[colo_list[i]]] = int(row[colo_dict[colo_list[i]]]) - 1
+                                    filter_list.append(i)
+                            for i in sorted(filter_list, reverse = True):
+                                del int_list[i]
+                                row[mrna_int_title] = int_list
+                                del colo_list[i]
+                                row[mrna_colo_title] = colo_list
+                        file_df = file_df.loc[file_df[total_mrna] != 0]
+                        file_df.to_csv(f"{file} filtered.csv")
+                        #filter by organelle coverage
+        filter_done_lbl.config(text = f'Filtered and unfiltered tables saved in {folder_entry.get()}{new_folder_string}')
 
 def mrna_filter():
     return

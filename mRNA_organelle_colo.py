@@ -99,6 +99,8 @@ def check_names():
 def filter_main():
     if len(folder_entry.get()) == 0 or len(file_names.get()) == 0 or len(sample_names.get()) == 0 or error_lbl.cget('text') != '':
         filter_lbl.config(text = "One or more of the needed inputs is missing or wrong.", foreground = 'indigo')
+    elif file_ids.cget('text') == '' or sample_name_lbl.cget('text') == '':
+        filter_lbl.config(text = "Enter sample names/ids", foreground = 'indigo')
     else:
         filter_vals_list = [mrna_max.get(), mrna_min.get(), org_max.get(), org_min.get()]
         for val in filter_vals_list:
@@ -111,38 +113,127 @@ def filter_main():
             zero_filter(folder_entry.get())
             file_list = csv_files_list(f"{folder_entry.get()}{new_folder_string}")
             for file in file_list:
-                for id in list(file_names.get().split(' ')):
-                    if id not in file:
-                        print(1)
-                        continue
-                    else:
+                for name in list(sample_names.get().split(' ')):
+                    if name in file:
                         file_df = pd.read_csv(file)
-                        for i, row in file_df.iterrows():
-                            int_list = ast.literal_eval(row[mrna_int_title])
-                            colo_list = ast.literal_eval(row[mrna_colo_title])
-                            #filter by mRNA intensity
-                            filter_list = []
-                            for i in range(len(int_list)):
-                                if float(int_list[i]) > float(mrna_max.get()) or float(int_list[i]) < float(mrna_min.get()):
-                                    print(1)
-                                    row[total_mrna] = int(row[total_mrna]) - 1
-                                    row[colo_dict[colo_list[i]]] = int(row[colo_dict[colo_list[i]]]) - 1
-                                    filter_list.append(i)
-                            for i in sorted(filter_list, reverse = True):
-                                del int_list[i]
-                                row[mrna_int_title] = int_list
-                                del colo_list[i]
-                                row[mrna_colo_title] = colo_list
-                        file_df = file_df.loc[file_df[total_mrna] != 0]
-                        file_df.to_csv(f"{file} filtered.csv")
+                        #filter by mRNA intensity
+                        filtered_mrna = mrna_filter(file_df)
                         #filter by organelle coverage
-        filter_done_lbl.config(text = f'Filtered and unfiltered tables saved in {folder_entry.get()}{new_folder_string}')
+                        file_df = filtered_mrna.loc[file_df[total_mrna] != 0]
+                        filtered_org = org_filter(file_df)
+                        file_df = filtered_org.loc[file_df[total_mrna] != 0]
+                        file_df.to_csv(f"{folder_entry.get()}{new_folder_string}{name} filtered.csv", index = False)
+                        calc_tables(f"{folder_entry.get()}{new_folder_string}")        
+            filter_done_lbl.config(text = f'Tables saved in {folder_entry.get()}{new_folder_string}')
 
-def mrna_filter():
-    return
+def zero_filter(folder_path):
+    csv_files = csv_files_list(folder_path)
+    my_strains = sample_dict
+    try: os.makedirs(folder_path + new_folder_string)
+    except: FileExistsError
+    for key in my_strains:
+            for file in csv_files:
+                if my_strains[key] in file:
+                    file_df = pd.read_csv(file)
+                    file_df = file_df.loc[file_df[total_mrna] != 0]
+                    file_df.to_csv(f"{folder_path}{new_folder_string}{key} no zero.csv", index = False)
 
-def org_filter():
-    return
+def mrna_filter(file_df):
+    for i, row in file_df.iterrows():
+        int_list = ast.literal_eval(row[mrna_int_title])
+        colo_list = ast.literal_eval(row[mrna_colo_title])
+        z_list = ast.literal_eval(row[mrna_z_title])
+        filter_list = []
+        curr_tot = int(file_df.loc[i, total_mrna])
+        for j in range(len(int_list)):
+            curr_colo = int(file_df.loc[i, colo_dict[colo_list[j]]])
+            if float(int_list[j]) > float(mrna_max.get()) or float(int_list[j]) < float(mrna_min.get()):
+                curr_tot -= 1
+                curr_colo -= 1
+                filter_list.append(j)
+                file_df.loc[i, colo_dict[colo_list[j]]] = curr_colo
+            file_df.loc[i, total_mrna] = curr_tot
+        for j in sorted(filter_list, reverse = True):
+            del int_list[j]
+            del colo_list[j]
+            del z_list[j]
+        file_df.at[i, mrna_int_title] = int_list
+        file_df.at[i, mrna_colo_title] = colo_list
+        file_df.at[i, mrna_z_title] = z_list
+    return file_df
+    
+
+def org_filter(file_df):
+    for i, row in file_df.iterrows():
+        org_list = ast.literal_eval(row[org_cov_title])
+        z_list = row[mrna_z_title]
+        colo_list = row[mrna_colo_title]
+        int_list = row[mrna_int_title]
+        spot_del = []
+        
+        for cov in range(len(org_list)):
+            if org_list[cov] < float(org_min.get()) or org_list[cov] > float(org_max.get()):
+                for z in range(len(z_list)):
+                    if z_list[z] == cov:
+                        spot_del.append(z)
+        curr_tot = int(file_df.loc[i, total_mrna])
+        for spot in sorted(spot_del, reverse = True):
+            curr_colo = int(file_df.loc[i, colo_dict[colo_list[spot]]])
+            curr_tot -= 1
+            curr_colo -= 1
+            file_df.loc[i, colo_dict[colo_list[spot]]] = curr_colo
+            del z_list[spot]
+            del colo_list[spot]
+            del int_list[spot]
+        file_df.loc[i, total_mrna] = curr_tot
+    return file_df
+
+#Calc ratios and averages and add to csv
+def calc_tables(folder_path):
+    csv_files = csv_files_list(folder_path)
+    csv_files = [f for f in csv_files if 'filtered' in f]
+    for key in sample_dict:
+            for file in csv_files:
+                if key in file:
+                    file_df = pd.read_csv(file)
+                    file_df[ner_col_rat] = xf.calc_loc_ratio(file_df[total_mrna].tolist(), file_df[col_ner_title].tolist())
+                    file_df[cer_col_rat] = xf.calc_loc_ratio(file_df[total_mrna].tolist(), file_df[col_cer_title].tolist())
+                    file_df[not_col_rat] = xf.calc_loc_ratio(file_df[total_mrna].tolist(), file_df[not_col_title].tolist())
+                    file_df[tot_col_rat] = xf.calc_comp_ratio(file_df[not_col_rat].tolist())
+                    file_df[ava_org_cov] = xf.calc_ave_cov(file_df[org_cov_title].tolist(), float(org_min.get()), float(org_max.get()))
+                    file_df.to_csv(f"{folder_path}{key} Calculation Table.csv", index = False)
+
+#Calc ttests between all files and avarages of each column and create statistics table in csv file
+def statistics_table(folder_path, strain_dic):
+    file_list = csv_files_list(folder_path)
+    tot_mrna_ave = ["Total Signals per Cell Average", "Total Signals per Cell SEM"]
+    tot_col_ave = ["Total Colocolized Average", "Total Colocolized SEM"]
+    ner_col_ave = ["Total Not Colocolized Average", "Total nER SEM"]
+    cer_col_ave = ["Total nER Average", "Total cER SEM"]
+    not_col_ave = ["Total cER Average", "Total Not Colocolized SEM"]
+    col_list = [tot_mrna_ave[0], tot_mrna_ave[1], tot_col_ave[0], tot_col_ave[1], not_col_ave[0], not_col_ave[1], ner_col_ave[0], ner_col_ave[1], cer_col_ave[0], cer_col_ave[1]]
+    stat_df = pd.DataFrame(index = col_list, columns = list(strain_dic.keys()))
+    for key in strain_dic:
+        for file in file_list:
+            if key in file:
+                file_df = pd.read_csv(file)
+                col = 0
+                for title in range(len(title_order)):
+                    stat = xf.calc_col_ava(file_df[title_order[title]].tolist())
+                    stat_df.loc[col_list[col], key] = stat[0]
+                    col += 1
+                    stat_df.loc[col_list[col], key] = stat[1]
+                    col += 1
+    stat_df.to_csv(f"{folder_path}Stats Table.csv")
+    print("Statistics table produced.")          
+
+#Create a list of csv path files from a folder that may contain other files/folders
+def csv_files_list(folder):
+    csv_list = []
+    for file in os.listdir(folder):
+        if str(file).endswith("csv", -3):
+            csv_list.append(os.path.abspath(os.path.join(folder, file)))
+    return csv_list              
 
 def plot_data():
     return
@@ -228,92 +319,4 @@ plot_but = ttk.Button(gui, text = 'Plot', command = plot_data)
 plot_but.grid(row = 13, column = 0, columnspan = 4)
 
 
-# def main():
- 
-#     my_strain_dic = calc_tables(tables_folder_path)
-#     #statistics_table(tables_folder_path)
-#     statistics_table(tables_folder_path + new_folder_string, my_strain_dic)
-    
-#     return f"Tables saved in {tables_folder_path + new_folder_string}"
-
-def zero_filter(folder_path):
-    csv_files = csv_files_list(folder_path)
-    my_strains = sample_dict
-    try: os.makedirs(folder_path + new_folder_string)
-    except: FileExistsError
-    for key in my_strains:
-            for file in csv_files:
-                if my_strains[key] in file:
-                    file_df = pd.read_csv(file)
-                    file_df = file_df.loc[file_df[total_mrna] != 0]
-                    file_df.to_csv(f"{folder_path}{new_folder_string}{key} no zero.csv")
-    
-
-#Calc ratios and averages and add to csv
-def calc_tables(folder_path):
-    if folder_path == '':
-        print("You didn't select a folder. Quitting.")
-        exit()
-    csv_files = csv_files_list(folder_path)
-    my_strains = get_sample_names()
-    try: os.makedirs(folder_path + new_folder_string)
-    except: FileExistsError
-    for key in my_strains:
-            for file in csv_files:
-                if my_strains[key] in file:
-                    file_df = pd.read_csv(file)
-                    file_df = file_df.loc[file_df[total_mrna] != 0]
-                    file_df[ner_col_rat] = xf.calc_loc_ratio(file_df[total_mrna].tolist(), file_df[col_ner_title].tolist())
-                    file_df[cer_col_rat] = xf.calc_loc_ratio(file_df[total_mrna].tolist(), file_df[col_cer_title].tolist())
-                    file_df[not_col_rat] = xf.calc_loc_ratio(file_df[total_mrna].tolist(), file_df[not_col_title].tolist())
-                    file_df[tot_col_rat] = xf.calc_comp_ratio(file_df[not_col_rat].tolist())
-                    file_df[ava_org_cov] = xf.calc_ave_cov(file_df[org_cov_title].tolist())
-                    file_df.to_csv(f"{folder_path}{new_folder_string}{key} Calculation Table.csv")
-                    print(f"file for {key} done")
-    return my_strains
-
-#Calc ttests between all files and avarages of each column and create statistics table in csv file
-def statistics_table(folder_path, strain_dic):
-    file_list = csv_files_list(folder_path)
-    tot_mrna_ave = ["Total Signals per Cell Average", "Total Signals per Cell SEM"]
-    tot_col_ave = ["Total Colocolized Average", "Total Colocolized SEM"]
-    ner_col_ave = ["Total Not Colocolized Average", "Total nER SEM"]
-    cer_col_ave = ["Total nER Average", "Total cER SEM"]
-    not_col_ave = ["Total cER Average", "Total Not Colocolized SEM"]
-    col_list = [tot_mrna_ave[0], tot_mrna_ave[1], tot_col_ave[0], tot_col_ave[1], not_col_ave[0], not_col_ave[1], ner_col_ave[0], ner_col_ave[1], cer_col_ave[0], cer_col_ave[1]]
-    stat_df = pd.DataFrame(index = col_list, columns = list(strain_dic.keys()))
-    for key in strain_dic:
-        for file in file_list:
-            if key in file:
-                file_df = pd.read_csv(file)
-                col = 0
-                for title in range(len(title_order)):
-                    stat = xf.calc_col_ava(file_df[title_order[title]].tolist())
-                    stat_df.loc[col_list[col], key] = stat[0]
-                    col += 1
-                    stat_df.loc[col_list[col], key] = stat[1]
-                    col += 1
-    stat_df.to_csv(f"{folder_path}Stats Table.csv")
-    print("Statistics table produced.")          
-
-#Create a list of csv path files from a folder that may contain other files/folders
-def csv_files_list(folder):
-    csv_list = []
-    for file in os.listdir(folder):
-        if str(file).endswith("csv", -3):
-            csv_list.append(os.path.abspath(os.path.join(folder, file)))
-    return csv_list
-
-#Get samples names from user and create list for each type
-def get_sample_names():
-    num_strains = int(input("How many sample types in your experiment? "))
-    strains_dict = {}
-    for sample in range(num_strains):
-        strain_name = input(f"Name of sample type {sample + 1}: ")
-        strain_ident = input(f"Specifict Identifier in sample {sample + 1} file names: ")
-        strains_dict[strain_name] = strain_ident
-    return strains_dict
-
-
 gui.mainloop()
-#main()

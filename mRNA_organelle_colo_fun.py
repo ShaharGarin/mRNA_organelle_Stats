@@ -21,11 +21,15 @@ def calc_comp_ratio(column):
 
 
 #Calc avarage of lists in column
-def calc_ave_cov(column):
+def calc_ave_cov(column, min, max):
     cov_list = []
     for cell in column:
         list_cell = ast.literal_eval(cell)
-        cov_list.append(sum(list_cell)/len(list_cell))
+        list_cell = [cov for cov in list_cell if cov >= min and cov <= max]
+        if len(list_cell) != 0:
+            cov_list.append(sum(list_cell)/len(list_cell))
+        else:
+            cov_list.append([])
     
     return cov_list
 

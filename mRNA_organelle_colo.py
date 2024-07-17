@@ -10,7 +10,8 @@ from tkinter import ttk
 from ttkthemes import ThemedTk
 import ast
 from scipy import stats
-
+import seaborn as sns
+import matplotlib.pyplot as plt
 
 
 total_mrna = "Total mRNA per Cell"
@@ -267,6 +268,16 @@ def make_dic(files):
                 anova_dict[key] = file_df[tot_col_rat].to_list()
     return anova_dict
 
+def make_scatter_dic(files):
+    scatter_dict = {}
+    for key in sample_dict.keys():
+        for file in files:
+            if key in file:
+                file_df = pd.read_csv(file)
+                scatter_dict[key] = [file_df[tot_col_rat].to_list(), file_df[ava_org_cov].tolist()]
+
+    return scatter_dict
+
 #Create a list of csv path files from a folder that may contain other files/folders
 def csv_files_list(folder):
     csv_list = []
@@ -276,7 +287,24 @@ def csv_files_list(folder):
     return csv_list              
 
 def plot_data():
-    return
+    plot_files = csv_files_list(f"{folder_entry.get()}{new_folder_string}")
+    plot_files = [file for file in plot_files if 'Calculation Table' in file]
+    plot_dic = make_dic(plot_files)
+    #Get data from plot_dic
+    categories = list(plot_dic.keys())
+    data_values = list(plot_dic.values())
+    #Plot violin plot
+    sns.violinplot(data = data_values, inner = 'point')
+    plt.xticks(ticks=range(len(categories)), labels=categories)  # Set x-axis tick labels
+    plt.xlabel('Samples')
+    plt.ylabel('mRNA-Organelle Colocalization Ratio')
+    plt.title('mRNA-Organelle Colocalization')
+    plot_path = fr'{folder_entry.get()}{new_folder_string}Total Colocalization Plot.png'
+    if os.path.isfile(plot_path):
+        os.remove(plot_path)
+    plt.savefig(plot_path, format = 'png', dpi = 500)
+    plt.show()
+    plt.close()
 
 #Design gui window
 gui.title("mRNA-Organelle Colocalization Tool")
@@ -357,6 +385,9 @@ sep2.grid(row = 12, column = 0, rowspan = 1, columnspan = 100, sticky = 'ew', pa
 #Plot filtered data
 plot_but = ttk.Button(gui, text = 'Plot', command = plot_data)
 plot_but.grid(row = 13, column = 0, columnspan = 4)
+#Plot image
+plot_img = ttk.Label(gui, image = '')
+plot_img.grid(row = 14, column = 0, columnspan = 2)
 
 
 gui.mainloop()

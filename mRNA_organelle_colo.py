@@ -9,6 +9,8 @@ import tkinter as tk
 from tkinter import ttk
 from ttkthemes import ThemedTk
 import ast
+from scipy import stats
+
 
 
 total_mrna = "Total mRNA per Cell"
@@ -55,6 +57,7 @@ def check_ids():
     if ident_list == ['']:
         error_lbl.config(text = "No identifiers entered", foreground = 'indigo')
     else:
+        ident_list = [id for id in ident_list if id != '']
         error_lbl.config(text = '')
         file_ids.config(text = f"You have {len(ident_list)} sample(s): \n {ident_list}", justify = 'center')
         #Check each id given has an associated file
@@ -89,6 +92,7 @@ def check_names():
     elif len(name_list) != len(ident_list):
         error_lbl.config(text = "Number of ids and names don't match.\nCan't Continue", foreground = 'indigo', justify = 'center')
     else:
+        name_list = [name for name in name_list if name != '']
         for sample in range(len(name_list)):
             strain_name = name_list[sample]
             strain_ident = ident_list[sample]
@@ -125,7 +129,7 @@ def filter_main():
                         file_df.to_csv(f"{folder_entry.get()}{new_folder_string}{name} filtered.csv", index = False)
                         calc_tables(f"{folder_entry.get()}{new_folder_string}")        
             #statistical comparisons table
-            statistics_table(folder_entry.get())
+            statistics_table(f'{folder_entry.get()}{new_folder_string}')
             filter_done_lbl.config(text = f'Tables saved in {folder_entry.get()}{new_folder_string}')
 
 def zero_filter(folder_path):
@@ -214,7 +218,7 @@ def statistics_table(folder_path):
     ner_col_ave = ["Total Not Colocolized Average", "Total nER SEM"]
     cer_col_ave = ["Total nER Average", "Total cER SEM"]
     not_col_ave = ["Total cER Average", "Total Not Colocolized SEM"]
-    org_cov_ave = ["Organelle Coverage Average", "Organelle COverage SEM"]
+    org_cov_ave = ["Organelle Coverage Average", "Organelle Coverage SEM"]
     col_list = [tot_mrna_ave[0], tot_mrna_ave[1], tot_col_ave[0], tot_col_ave[1], not_col_ave[0], not_col_ave[1], ner_col_ave[0], ner_col_ave[1], cer_col_ave[0], cer_col_ave[1], org_cov_ave[0], org_cov_ave[1]]
     stat_df = pd.DataFrame(index = col_list, columns = list(sample_dict.keys()))
     for key in sample_dict:
@@ -228,12 +232,41 @@ def statistics_table(folder_path):
                     col += 1
                     stat_df.loc[col_list[col], key] = mean_err[1]
                     col += 1
-    stat_df = comp_samples(stat_df)
+    anova_list = []
+    anova_list = anova_comp(folder_path)
+    #Statistcal comparison via anova and Tuckey
+    if anova_list != []:
+        stat_df.loc['Anova Statistic', 0] = anova_list[0][0]
+        stat_df.loc['Anova p-value', 0] = anova_list[0][1]
+        for res in range(len(anova_list[1])):
+                for key in range(len(sample_dict.keys())):
+                    stat_df.loc[f'Tukey HSD Test pvalues {list(sample_dict.keys())[res]}', list(sample_dict.keys())[key]] = anova_list[1][res][key]
+            
     stat_df.to_csv(f"{folder_path}Stats Table.csv")
-    print("Statistics table produced.")        
 
-def comp_samples(stat_df):
-    return stat_df
+#Calc anove nad tuckey between all samples
+def anova_comp(folder):
+    file_list = csv_files_list(folder)
+    file_list = [file for file in file_list if 'Calculation Table' in file]
+    loc_anova = make_dic(file_list)
+    if len(loc_anova.values()) == 1:
+        filter_lbl.config(text = "Only one sample. Nothing to compare", foreground = 'indigo')
+        return []
+    else:
+        anova_res = stats.f_oneway(*loc_anova.values())
+        tukey_res = stats.tukey_hsd(*loc_anova.values()).pvalue
+        return [anova_res, tukey_res]
+
+#create df for anova
+def make_dic(files):
+    anova_dict = {}
+    for key in sample_dict.keys():
+        for file in files:
+            if key in file:
+                file_df = pd.read_csv(file)
+                anova_dict[key] = file_df[tot_col_rat].to_list()
+    return anova_dict
+
 #Create a list of csv path files from a folder that may contain other files/folders
 def csv_files_list(folder):
     csv_list = []

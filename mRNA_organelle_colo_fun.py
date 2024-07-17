@@ -36,3 +36,11 @@ def calc_ave_cov(column, min, max):
 #Calc avarages and standard error of whole column
 def calc_col_ava(column):
     return [np.mean(column), stats.sem(column)]
+
+#create df for anova
+def make_df(folder):
+    return
+
+#Calc anove nad tuckey between all samples
+def anova_comp(df):
+    return

@@ -23,10 +23,10 @@ mrna_colo_title = "mRNAs status"
 new_folder_string = "/Calc Tables/"
 tot_col_rat = "Total Colocolized Ratio"
 ner_col_rat = "nER Colocalization Ratio"
-cer_col_rat = "cER Colocalization Ration"
+cer_col_rat = "cER Colocalization Ratio"
 not_col_rat = "Not Colocalized Ratio"
 ava_org_cov = "Average Organelle Coverage"
-title_order = [total_mrna, tot_col_rat, not_col_rat, ner_col_rat, cer_col_rat]
+title_order = [total_mrna, tot_col_rat, not_col_rat, ner_col_rat, cer_col_rat, ava_org_cov]
 sample_dict = {}
 
 
@@ -124,6 +124,8 @@ def filter_main():
                         file_df = filtered_org.loc[file_df[total_mrna] != 0]
                         file_df.to_csv(f"{folder_entry.get()}{new_folder_string}{name} filtered.csv", index = False)
                         calc_tables(f"{folder_entry.get()}{new_folder_string}")        
+            #statistical comparisons table
+            statistics_table(folder_entry.get())
             filter_done_lbl.config(text = f'Tables saved in {folder_entry.get()}{new_folder_string}')
 
 def zero_filter(folder_path):
@@ -204,29 +206,34 @@ def calc_tables(folder_path):
                     file_df.to_csv(f"{folder_path}{key} Calculation Table.csv", index = False)
 
 #Calc ttests between all files and avarages of each column and create statistics table in csv file
-def statistics_table(folder_path, strain_dic):
+def statistics_table(folder_path):
     file_list = csv_files_list(folder_path)
+    file_list = [f for f in file_list if 'Calculation Table' in f]
     tot_mrna_ave = ["Total Signals per Cell Average", "Total Signals per Cell SEM"]
     tot_col_ave = ["Total Colocolized Average", "Total Colocolized SEM"]
     ner_col_ave = ["Total Not Colocolized Average", "Total nER SEM"]
     cer_col_ave = ["Total nER Average", "Total cER SEM"]
     not_col_ave = ["Total cER Average", "Total Not Colocolized SEM"]
-    col_list = [tot_mrna_ave[0], tot_mrna_ave[1], tot_col_ave[0], tot_col_ave[1], not_col_ave[0], not_col_ave[1], ner_col_ave[0], ner_col_ave[1], cer_col_ave[0], cer_col_ave[1]]
-    stat_df = pd.DataFrame(index = col_list, columns = list(strain_dic.keys()))
-    for key in strain_dic:
+    org_cov_ave = ["Organelle Coverage Average", "Organelle COverage SEM"]
+    col_list = [tot_mrna_ave[0], tot_mrna_ave[1], tot_col_ave[0], tot_col_ave[1], not_col_ave[0], not_col_ave[1], ner_col_ave[0], ner_col_ave[1], cer_col_ave[0], cer_col_ave[1], org_cov_ave[0], org_cov_ave[1]]
+    stat_df = pd.DataFrame(index = col_list, columns = list(sample_dict.keys()))
+    for key in sample_dict:
         for file in file_list:
             if key in file:
                 file_df = pd.read_csv(file)
                 col = 0
                 for title in range(len(title_order)):
-                    stat = xf.calc_col_ava(file_df[title_order[title]].tolist())
-                    stat_df.loc[col_list[col], key] = stat[0]
+                    mean_err = xf.calc_col_ava(file_df[title_order[title]].tolist())
+                    stat_df.loc[col_list[col], key] = mean_err[0]
                     col += 1
-                    stat_df.loc[col_list[col], key] = stat[1]
+                    stat_df.loc[col_list[col], key] = mean_err[1]
                     col += 1
+    stat_df = comp_samples(stat_df)
     stat_df.to_csv(f"{folder_path}Stats Table.csv")
-    print("Statistics table produced.")          
+    print("Statistics table produced.")        
 
+def comp_samples(stat_df):
+    return stat_df
 #Create a list of csv path files from a folder that may contain other files/folders
 def csv_files_list(folder):
     csv_list = []

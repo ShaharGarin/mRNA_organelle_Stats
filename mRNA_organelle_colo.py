@@ -92,7 +92,9 @@ def check_names():
         error_lbl.config(text = "No names entered", foreground = 'indigo')
     elif len(name_list) != len(ident_list):
         error_lbl.config(text = "Number of ids and names don't match.\nCan't Continue", foreground = 'indigo', justify = 'center')
+        sample_name_lbl.config(text = '')
     else:
+        ident_list = [id for id in ident_list if id != '']
         name_list = [name for name in name_list if name != '']
         for sample in range(len(name_list)):
             strain_name = name_list[sample]

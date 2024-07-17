@@ -96,7 +96,6 @@ def check_names():
     else:
         ident_list = [id for id in ident_list if id != '']
         name_list = [name for name in name_list if name != '']
-        sample_dict.clear()
         for sample in range(len(name_list)):
             strain_name = name_list[sample]
             strain_ident = ident_list[sample]

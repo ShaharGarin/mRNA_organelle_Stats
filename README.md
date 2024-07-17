@@ -36,9 +36,13 @@ In a cell (as seen above) several types of signals can be found. They include th
 
 ### How-to:
 To run the program you will need a folder containing the files described above. The program can handle any number of files. Each file will represent a single sample from the smFISH experiment.
-Once you run the program (simply run mRNA_orgnalle_colo.py) you will be prompted to input the folder with the files, the number of samples in the experiment (an int), a name for each sample (will appear in the graphs and tables), and a distinct name for the file of each sample (will be used to identify the file in the folder). The file name needs to be a part of the file for that sample and must not be a part of any other file in the folder. It will be case sensitive.
-Remember to press the 'Enter' buttons after you input the ids or names.
+Once you run the program (simply run mRNA_orgnalle_colo.py) a window with a gui will open.
+![The Gui](img/gui_1.png)
+You will be prompted to input the folder with the files, the number of samples in the experiment (an int), a name for each sample (will appear in the graphs and tables), and a distinct name for the file of each sample (will be used to identify the file in the folder). The file name needs to be a part of the file for that sample and must not be a part of any other file in the folder. It will be case sensitive.
+Pay attention error masseges that may appear if the inputs are incorrect.
+![The Gui](img/gui_err.png)
+Remember to press the 'Enter' buttons after you input the ids or names. After each input, you a messege below it will give you information about it.
 
-To see a violing plot of the data after filtartion (colocalizaion ratio for each sample). The plot is also saved by defualt in the same folder as the rest of produced tables.
+To see a violin plot of the data after filtartion (colocalizaion ratio for each sample). The plot is also saved by defualt in the same folder as the rest of produced tables: In a new folder, located in the folder with the data files.
 
 This project was created as part of the [Python programming course](https://github.com/szabgab/wis-python-course-2024-04) at the [Weizmann Institute of Science](https://www.weizmann.ac.il/) taught by [Gabor Szabo](https://szabgab.com/).

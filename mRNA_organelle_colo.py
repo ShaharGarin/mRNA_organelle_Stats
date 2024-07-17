@@ -115,6 +115,8 @@ def filter_main():
             except: ValueError
         if type(val) != float:
             filter_lbl.config(text = "Filter value not a number.", foreground = 'indigo')
+        elif float(mrna_max.get()) > 65535 or float(mrna_min.get()) < 0 or float(org_max.get()) > 100 or float(org_min.get()) < 0:
+            filter_lbl.config(text = "Filter out of possible range.", foreground = 'indigo')
         else:
             filter_lbl.config(text = '')
             zero_filter(folder_entry.get())
@@ -289,24 +291,27 @@ def csv_files_list(folder):
     return csv_list              
 
 def plot_data():
-    plot_files = csv_files_list(f"{folder_entry.get()}{new_folder_string}")
-    plot_files = [file for file in plot_files if 'Calculation Table' in file]
-    plot_dic = make_dic(plot_files)
-    #Get data from plot_dic
-    categories = list(plot_dic.keys())
-    data_values = list(plot_dic.values())
-    #Plot violin plot
-    sns.violinplot(data = data_values, inner = 'point')
-    plt.xticks(ticks=range(len(categories)), labels=categories)  # Set x-axis tick labels
-    plt.xlabel('Samples')
-    plt.ylabel('mRNA-Organelle Colocalization Ratio')
-    plt.title('mRNA-Organelle Colocalization')
-    plot_path = fr'{folder_entry.get()}{new_folder_string}Total Colocalization Plot.png'
-    if os.path.isfile(plot_path):
-        os.remove(plot_path)
-    plt.savefig(plot_path, format = 'png', dpi = 500)
-    plt.show()
-    plt.close()
+    if filter_done_lbl.cget('text') != f'Tables saved in {folder_entry.get()}{new_folder_string}':
+        plot_err.config(text = 'You must filter successfully before you may plot.')
+    else:    
+        plot_files = csv_files_list(f"{folder_entry.get()}{new_folder_string}")
+        plot_files = [file for file in plot_files if 'Calculation Table' in file]
+        plot_dic = make_dic(plot_files)
+        #Get data from plot_dic
+        categories = list(plot_dic.keys())
+        data_values = list(plot_dic.values())
+        #Plot violin plot
+        sns.violinplot(data = data_values, inner = 'point')
+        plt.xticks(ticks=range(len(categories)), labels=categories)  # Set x-axis tick labels
+        plt.xlabel('Samples')
+        plt.ylabel('mRNA-Organelle Colocalization Ratio')
+        plt.title('mRNA-Organelle Colocalization')
+        plot_path = fr'{folder_entry.get()}{new_folder_string}Total Colocalization Plot.png'
+        if os.path.isfile(plot_path):
+            os.remove(plot_path)
+        plt.savefig(plot_path, format = 'png', dpi = 500)
+        plt.show()
+        plt.close()
 
 #Design gui window
 gui.title("mRNA-Organelle Colocalization Tool")
@@ -359,7 +364,7 @@ mrna_max.insert(0, '65535')
 mrna_max.grid(row = 3, column = 3)
 
 #get organelle coverages min/max
-org_int = ttk.Label(gui, text = 'Enter Organelle Coverage values:', justify = 'center')
+org_int = ttk.Label(gui, text = 'Enter Organelle Coverage values (%):', justify = 'center')
 org_int.grid(row = 4, column = 2, columnspan = 2)
 org_min_lbl = ttk.Label(gui, text = "min:")
 org_min_lbl.grid(row = 5, column = 2)
@@ -387,9 +392,8 @@ sep2.grid(row = 12, column = 0, rowspan = 1, columnspan = 100, sticky = 'ew', pa
 #Plot filtered data
 plot_but = ttk.Button(gui, text = 'Plot', command = plot_data)
 plot_but.grid(row = 13, column = 0, columnspan = 4)
-#Plot image
-plot_img = ttk.Label(gui, image = '')
-plot_img.grid(row = 14, column = 0, columnspan = 2)
+plot_err = ttk.Label(gui, text = '', foreground = 'indigo', justify = 'center')
+plot_err.grid(row = 14, column = 0, columnspan = 4)
 
 
 gui.mainloop()
